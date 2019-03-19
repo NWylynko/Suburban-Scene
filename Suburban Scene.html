@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+            button {
+                margin: auto;
+                width: 100%;
+            }
+            canvas {
+                
+                margin: auto;
+                width: 100%;
+            }
+        </style>
+        
+    </head>
+    <body>
+        <canvas id="mycanvas"></canvas>
+        <form>
+            <button onclick="startScene()">Start</button>
+            <button onclick="stopScene()">Stop</button>
+        </form>
+        <script>
+            
+            //variables
+            var canvas, context;
+            var screenHeight, screenWidth;
+            var autoStart = true;
+            houses = []
+            Lake = []
+            Clouds = []
+            RoadLines = []
+            cars = []
+            stars = []
+            var Sun;
+            var cycle = "day";
+            var nightAlpha = 0;
+            var dayAlpha = 1;
+            var tick = 0;
+            var keyDown;
+            var Boat;
+            var Road;
+            
+            //start script
+            if (autoStart == true) {
+                startScene();
+            }
+            
+            //function to get cool stuff
+            
+            function getRandomHexColour() {
+                //gets a random Hex colour but i bearly use it yay
+                return '#'+Math.floor(Math.random()*16777215).toString(16);
+            }
+            
+            function getRandomRGBColour() {
+                //get a random rgb colour just like the random hex and again i dont use it often
+                //"rgb(73, 0, 253)"
+                return "rgb(" + getRandomInt(250) + ", " + getRandomInt(250) + ", " + getRandomInt(250) + ")"
+            }
+        
+            function getRandomInt(max) {
+                //gets a random number and adds 1 to it so it will never be 0 which isnt good and i should have set it as a variable and pass it throught the function
+                return Math.floor(Math.random() * Math.floor(max)) + 1;
+            }
+            
+            function onKeyDown(evt)
+            //i defiantly didnt copy this from the Aliens.html game thing from arcadia, but dont worry i understand what it does
+            {
+                switch (evt.keyCode)
+                {
+                    case 37: // left arrow
+                        keyDown = 37
+                        break;
+                    case 38: // up arrow
+                        keyDown = 38
+                        break;
+                    case 39: // right arrow
+                        keyDown = 39
+                        break;
+                    case 40: // down arrow
+                        keyDown = 40
+                        break;
+                    default: // any other key
+                        break;
+                }
+                
+            }
+            function onKeyUp(evt) 
+            {
+                switch (evt.keyCode) {
+                    case 37: // left arrow
+                        if (keyDown == 37) {
+                            keyDown = 0
+                        }
+                        break;
+                    case 38: // up arrow
+                        if (keyDown == 38) {
+                            keyDown = 0
+                        }
+                        break;
+                    case 39: // right arrow
+                        if (keyDown == 39) {
+                            keyDown = 0
+                        }
+                        break;
+                    case 40: // down arrow
+                        if (keyDown == 40) {
+                            keyDown = 0
+                        }
+                        break;
+                    default: // any other key
+                        break;
+                }
+            }
+            
+            function makeGradient(c1, c2, x1, y1, x2, y2, x3, y3, x4, y4, directionLeft, directionUp, directionRight, directionDown) {
+                //makes a gradient, mainly used for the sky
+                var grd = context.createLinearGradient(directionLeft, directionUp, directionRight, directionDown); //direction eg..(0, 0, 0, 110) would make it fade down
+                grd.addColorStop(0, c1);
+                grd.addColorStop(1, c2);
+
+                
+                //context.fillRect(x, y, width, height);
+                context.beginPath();
+                context.moveTo(x1, y1);
+                context.lineTo(x2, y2);
+                context.lineTo(x3, y3);
+                context.lineTo(x4, y4);
+                context.closePath();
+                context.fillStyle = grd;
+                context.fill();
+            }
+            
+            function drawRectangle(x1, y1, x2, y2, x3, y3, x4, y4, colour) {
+                //apperently u can just do this with context.rect() but im tired
+                context.beginPath();
+                context.moveTo(x1, y1);
+                context.lineTo(x2, y2);
+                context.lineTo(x3, y3);
+                context.lineTo(x4, y4);
+                context.closePath();
+                context.fillStyle = colour;
+                context.fill();
+            }
+            
+            function drawTriangle(x1, y1, x2, y2, x3, y3, colour) {
+                //wow i wonder what this does, there is no way it draws a triangle
+                context.beginPath();
+                context.moveTo(x1, y1);
+                context.lineTo(x2, y2);
+                context.lineTo(x3, y3);
+                context.closePath();
+                context.fillStyle = colour;
+                context.fill();
+            }
+            
+            function drawCircle(x, y, radius, colour) {
+                //im lazy so i made this a function
+                context.beginPath();
+                context.arc(x, y, radius, Math.PI * 2, false);
+                context.closePath();
+                context.fillStyle = colour;
+                context.fill();
+            }
+            
+            function makeCircleGradient(c1, c2, x, y, radius, directionLeft, directionUp, directionRight, directionDown) {
+                //makes a circle gradient
+                var grd = context.createLinearGradient(directionLeft, directionUp, directionRight, directionDown); //direction eg..(0, 0, 0, 110) would make it fade down
+                grd.addColorStop(0, c1);
+                grd.addColorStop(1, c2);
+
+                
+                context.beginPath();
+                context.arc(x, y, radius, Math.PI * 2, false);
+                context.closePath();
+                context.fillStyle = grd;
+                context.fill();
+            }
+            
+            //end of cool functions
+            
+            //stupid functions
+            
+            function skyGradient() {
+                //cuz it fades to night and stuff i made this a function, this is like 50% of my functions just to have it night. i should have just made it a function and used it for everything but im lazzzy
+                //had to make this dumb function so i could have it go to night
+                
+                if (cycle == "night") {
+                    if (dayAlpha > 0) {
+                        dayAlpha -= 0.01
+                    }
+                    } else {
+                        if (dayAlpha < 1) {
+                            dayAlpha += 0.01
+                        }
+                    }
+                //sconsole.log(dayAlpha)
+                
+                colour1 = "rgba(0, 0, 200, " + dayAlpha +")"
+                colour2 = "rgba(0, 204, 255, " + dayAlpha +")"
+                
+                //night
+                makeGradient    (
+                            "black", "darkgrey",                            //colour 1, colour 2
+                            0, 0,                                               //x1, y1
+                            screenWidth, 0,                                     //x2, y2
+                            screenWidth, screenHeight / 2,                      //x3, y3
+                            0, screenHeight / 2,                                //x4, y4
+                            0, 0, 0, screenHeight / 2                           //fade direction
+                                )
+                //day
+                makeGradient    (
+                            this.colour1, this.colour2,                            //colour 1, colour 2
+                            0, 0,                                               //x1, y1
+                            screenWidth, 0,                                     //x2, y2
+                            screenWidth, screenHeight / 2,                      //x3, y3
+                            0, screenHeight / 2,                                //x4, y4
+                            0, 0, 0, screenHeight / 2                           //fade direction
+                                )
+            }
+            
+            function groundBackground() {
+                //another dumb function much like the one above it yaaaaaay
+                //its dumb cuz i basically copy and paste the function then just change like 3 things but its easier 
+                this.colour = "rgba(32, 232, 45, " + dayAlpha +")"
+                
+                //night
+                drawRectangle   (
+                            0, screenHeight / 2,                                //x1, y1
+                            screenWidth, screenHeight / 2,                      //x2, y2
+                            screenWidth, screenHeight,                          //x3, y3
+                            0, screenHeight,                                    //x4, y4
+                            "darkgreen"                                             //colour
+                                )
+                
+                //day
+                drawRectangle   (
+                            0, screenHeight / 2,                                //x1, y1
+                            screenWidth, screenHeight / 2,                      //x2, y2
+                            screenWidth, screenHeight,                          //x3, y3
+                            0, screenHeight,                                    //x4, y4
+                            this.colour                                             //colour
+                                )
+            }
+            
+            function drawHouse(x, y, dx, dy, size, r, g, b) {
+                //this probs draws the houses, i would like to put a fence around the house or maybe add a chimney but ehhh
+                this.x = x
+                this.y = y
+                
+                this.dx = dx
+                this.dy = dy
+                
+                this.size = size
+                
+                this.r = r
+                this.g = g
+                this.b = b
+                
+                this.colour = function(r, g, b, lightcycle) {
+                    //i think this is the start of the absolutly most stupid function, i guess it works fine but instead of making it global, i just copied and pasted everywhereee
+                    if (lightcycle == "day") {
+                        output = "rgba(" + (this.r + r) + ", " + (this.g + g) + ", " + (this.b + b) + ", " + dayAlpha +")"
+                    } else {
+                        output = "rgb(" + (this.r + r - this.nightMinus) + ", " + (this.g + g - this.nightMinus) + ", " + (this.b + b - this.nightMinus) + ")"
+                    }
+                    return output
+                }
+                
+                this.draw = function(lightcycle)
+                {   
+                    
+                    if (cycle == "night") {
+                        this.windowColour = "yellow"
+                        this.nightMinus = 100
+                    } else {
+                        this.windowColour = "rgb(" + (r + 50) + ", " + (g + 50) + ", " + (b + 50) + ")"
+                        this.nightMinus = 0
+                    }
+                    
+                    //front wall
+                    drawRectangle(
+                        this.x, this.y, 
+                        this.x - this.size, this.y, 
+                        this.x - this.size, this.y - this.size, 
+                        this.x, this.y - this.size, 
+                        this.colour(0,0,0, lightcycle)
+                    );
+
+                    //side wall
+                    drawRectangle(
+                        this.x, this.y, 
+                        this.x + this.size * 1.5, this.y - this.size / 4, 
+                        this.x + this.size * 1.5, this.y - this.size / 0.8, 
+                        this.x, this.y - this.size,
+                        this.colour(5,5,5, lightcycle)
+                    );
+
+                    //front roof
+                    drawTriangle(
+                        this.x - this.size - this.size / 4, this.y - this.size,
+                        this.x - this.size / 2, this.y - this.size - this.size / 2,
+                        this.x + this.size / 4, this.y - this.size,
+                        this.colour(-20,-20,-20, lightcycle)
+                    );
+
+                    //side roof
+                    drawRectangle(
+                        this.x + this.size / 4, this.y - this.size,
+                        this.x + this.size / 4 + this.size * 1.5, this.y - this.size / 0.85, 
+                        this.x - this.size / 2 + this.size * 1.5, this.y - this.size - this.size / 1.6, 
+                        this.x - this.size / 2, this.y - this.size - this.size / 2,
+                        this.colour(50,50,50, lightcycle)
+                    );
+                    //front door
+                    drawRectangle(
+                        this.x - this.size / 4, this.y, 
+                        this.x - this.size / 1.5, this.y, 
+                        this.x - this.size / 1.5, this.y - this.size / 1.5, 
+                        this.x - this.size / 4, this.y - this.size / 1.5, 
+                        this.colour(-25,-25,-25, lightcycle)
+                    );
+                    //front window
+                    drawCircle(
+                        this.x - this.size / 2, 
+                        this.y - (this.size + this.size / 5), 
+                        this.size / 7, 
+                        this.windowColour
+                    );
+                    //side window
+                    drawRectangle(
+                        this.x + this.size / 3, this.y - this.size / 2, 
+                        this.x + this.size * 1.5 - this.size / 3, this.y - this.size / 4 - this.size / 2.5, 
+                        this.x + this.size * 1.5 - this.size / 3, this.y - this.size / 0.8 + this.size / 3, 
+                        this.x + this.size / 3, this.y - this.size + this.size / 5,
+                        this.windowColour
+                    );
+                }
+                
+                this.move = function() {
+                    //this gets it to move, i wonder if i could make a global variable that would update all the locations eh
+                    if (this.x < -screenWidth / 20) {
+                        this.x = screenWidth + 50
+                    }
+                    
+                    else {
+                        this.x += this.dx
+                    }
+                    
+                    
+                    
+                }
+            }
+            
+            function drawLake(x, y, dx, radius) {
+                //random lake at the bottom that no one knows what it is untill i explain it to them
+                this.x = x
+                this.y = y
+                
+                this.dx = dx
+                
+                this.radius = radius
+                
+                this.colour = function(r, g, b) {
+                    //improved colour function yay, still not going to make it a global function cuz im lazy, yes im gonna copy it everywhereeeee, and this one is changed againnnnn
+                    if (cycle == "night") {
+                        output = "rgb(" + (r - 100) + ", " + (g - 100) + ", " + (b - 100) + ")"
+                    } else {
+                        output = "rgb(" + r + ", " + g + ", " + b + ")"
+                    }
+                    return output
+                }
+                
+                this.drawOutline = function()
+                {   
+                    //outline in white
+                    drawCircle(this.x, this.y, this.radius, this.colour(255, 239, 151))
+                }
+                
+                this.drawWater = function()
+                {   
+                    //centre filled with blue 
+                    drawCircle(this.x, this.y, this.radius - 10, this.colour(9, 24, 191))
+                }
+                
+                this.move = function() 
+                {
+                    if (this.x < -this.radius) {
+                        //if it moves of the screen
+                        this.x = screenWidth + this.radius
+                    }
+                    
+                    else {
+                        //else move it along the scene
+                        this.x += this.dx
+                    }
+                }
+            }
+            
+            function drawClouds(x, y, dx, radius) {
+                //some nice fluffy, randomly generated clouds, i should make it so sometimes there is no clouds aka clear, eh maybe
+                this.x = x
+                this.y = y
+                this.dx = dx
+                this.radius = radius
+                
+                this.drawShadow = function()
+                {   
+                    //centre filled with blue (should be gradient but not working)
+                    drawCircle(this.x - 10, this.y + 10, this.radius, "rgba(200, 200, 200, " + dayAlpha +")")
+                }
+                
+                this.drawCloud = function()
+                {   
+                    //centre filled with blue (should be gradient but not working)
+                    drawCircle(this.x, this.y, this.radius, "rgba(255, 255, 255, " + dayAlpha +")")
+                }
+                
+                this.move = function() 
+                {
+                    if (this.x < -this.radius) {
+                        //if it moves of the screen
+                        this.x = screenWidth + this.radius
+                    }
+                    
+                    else {
+                        //else move it along the scene
+                        this.x += this.dx
+                    }
+                }
+            }
+            
+            function Sun() {
+                //the sun, thanks maths teacher for helping make it go in a circle
+                var suntick = 0
+                this.x = 0
+                this.y = screenHeight / 2
+                this.draw = function() {
+                    if (cycle == "night") {
+                        this.colour = "darkgrey"
+                    } else {
+                        this.colour = "yellow"
+                    }
+                
+                    context.beginPath();
+                    context.arc(this.x, this.y, screenHeight / 10, Math.PI * 2, false);
+                    context.closePath();
+                    context.fillStyle = this.colour;
+                    context.fill();
+                    tick += 1
+                }
+                this.cycle = function() {
+                    //THIS SHOULD BE A PUBLIC FUNCTION, but the eh
+                    if (tick > 500 && tick < 1000) {
+                        cycle = "night";
+                    }
+                    else if (tick < 500) {
+                        cycle = "day";
+                    }
+                    if (tick > 1000) {
+                        tick = 0
+                    }
+                }
+                this.moveSun = function() {
+                    //so i hate myself for doing things like this but it was what i needed to do but like the function above it should be a public function not one thats under the sun function
+                    if (tick < 500) {
+                        suntick = tick / 15 + 1
+                    } else {
+                        suntick = (tick - 500) / 15 + 1
+                    }
+                    
+                    if (suntick < 250 / 15 + 1) {
+                        sunheight = suntick
+                    } else {
+                        sunheight = 250 / 15 + 1 - (suntick - 250 / 15 + 1)
+                    }
+                    
+                    if (this.x > screenWidth) {
+                        this.x = 0
+                    }
+                    
+                    this.x = this.x + screenWidth / 500
+                    this.y = screenHeight / sunheight
+                    
+                    //console.log(suntick, sunheight)
+                }
+            }
+            
+            function drawRoad() {
+                //plz explain to me how a fricking line turns into 30 lines of code arghhhh
+                this.r = 100
+                this.g = 100
+                this.b = 100
+                
+                this.colour = function(r, g, b, lightcycle) {
+                    
+                    if (cycle == "night") {
+                        this.nightMinus = 100
+                    } else {
+                        this.nightMinus = 0
+                    }
+                    
+                    if (lightcycle == "day") {
+                        //output = "rgba(" + (this.r + r) + ", " + (this.g + g) + ", " + (this.b + b) + ", " + dayAlpha +")"
+                        output = "rgb(" + (this.r + r) + ", " + (this.g + g) + ", " + (this.b + b)  + ")"
+                    } else {
+                        //output = "rgba(" + (this.r + r - this.nightMinus) + ", " + (this.g + g - this.nightMinus) + ", " + (this.b + b - this.nightMinus) + ", " + dayAlpha +")"
+                        output = "rgb(" + (this.r + r - this.nightMinus) + ", " + (this.g + g - this.nightMinus) + ", " + (this.b + b - this.nightMinus) + ")"
+                    }
+                    return output
+                }
+                
+                this.draw = function() {
+                    drawRectangle   (
+                            0, screenHeight / 2 + screenHeight / 7,             //x1, y1
+                            screenWidth, screenHeight / 2 + screenHeight / 7,   //x2, y2
+                            screenWidth, screenHeight / 2 + screenHeight / 4,   //x3, y3
+                            0, screenHeight / 2 + screenHeight / 4,             //x4, y4
+                            this.colour(0, 0, 0, cycle)                                              //colour
+                                )
+                }
+            }
+            
+            function drawSmallObjects(object, x, y, dx, colour) {
+                //this is stupid, i knew it was stupid but i did it anyway cuz i felt like it, arghh
+                this.x = x
+                this.y = y
+                this.dx = dx
+                this.object = object
+                
+                this.r = 250
+                this.g = 250
+                this.b = 0
+                
+                this.colour = function(r, g, b) {
+                    //improved colour function yay, still not going to make it a global function cuz im lazy
+                    if (cycle == "night") {
+                        output = "rgb(" + (this.r + r - 100) + ", " + (this.g + g - 100) + ", " + (this.b + b - 100) + ")"
+                    } else {
+                        output = "rgb(" + (this.r + r) + ", " + (this.g + g) + ", " + (this.b + b)  + ")"
+                    }
+                    return output
+                }
+                
+                this.size = (screenWidth / 50) + getRandomInt(10)
+                this.draw = function()
+                {   
+                    switch(this.object) {
+                        case "Road Lines":
+                            //draws the yellow dotted line on road
+                            
+                            drawRectangle(
+                                    this.x, this.y, 
+                                    this.x - 50, this.y, 
+                                    this.x - 50, this.y - 10, 
+                                    this.x, this.y - 10, 
+                                    this.colour(0, 0, 0)
+                            )
+                            
+                            break;
+                        case "stars":
+                            //draws the stars 
+                            drawTriangle(
+                                this.x , this.y ,
+                                this.x + this.size, this.y ,
+                                this.x + this.size / 2, this.y - this.size - this.size / 2,
+                                "rgba(255, 255, 0, " + (1 - dayAlpha) + ")"
+                            );
+                            drawTriangle(
+                                this.x , this.y - this.size,
+                                this.x + this.size, this.y - this.size,
+                                this.x + this.size / 2, this.y + this.size / 2,
+                                "rgba(255, 255, 0, " + (1 - dayAlpha) + ")"
+                            );
+                            break;
+                    }
+                }
+                
+                this.move = function() 
+                {
+                    if (this.x < 0) {
+                        //if it moves of the screen
+                        this.x = screenWidth + this.size
+                    }
+                    
+                    else {
+                        //else move it along the scene
+                        this.x += this.dx
+                    }
+                }
+            }
+            
+            function boat() {
+                //ye this boat is dog shat, but it moves when you press the arrow keys, i just cant be bothered to make it look good and for some reason the rectangle isn't drawing but idc
+                this.r = getRandomInt(255)
+                this.g = getRandomInt(255)
+                this.b = getRandomInt(255)
+                
+                this.x = screenWidth / 2
+                this.y = screenHeight - screenHeight / 10
+                
+                this.dx = 0
+                this.dy = 0
+                
+                this.colour = function(r, g, b, lightcycle) {
+                    
+                    if (cycle == "night") {
+                        this.nightMinus = 100
+                    } else {
+                        this.nightMinus = 0
+                    }
+                    
+                    if (lightcycle == "day") {
+                        //output = "rgba(" + (this.r + r) + ", " + (this.g + g) + ", " + (this.b + b) + ", " + dayAlpha +")"
+                        output = "rgb(" + (this.r + r) + ", " + (this.g + g) + ", " + (this.b + b)  + ")"
+                    } else {
+                        //output = "rgba(" + (this.r + r - this.nightMinus) + ", " + (this.g + g - this.nightMinus) + ", " + (this.b + b - this.nightMinus) + ", " + dayAlpha +")"
+                        output = "rgb(" + (this.r + r - this.nightMinus) + ", " + (this.g + g - this.nightMinus) + ", " + (this.b + b - this.nightMinus) + ")"
+                    }
+                    return output
+                }
+                
+                this.draw = function(colour, sizeToAdd) {
+                    drawRectangle(
+                        this.x + sizeToAdd, this.y - sizeToAdd + this.size / 5, 
+                        this.x + sizeToAdd, this.y + this.size - sizeToAdd, 
+                        this.x + this.size + sizeToAdd, this.y + this.size -  sizeToAdd, 
+                        this.x + this.size + sizeToAdd, this.y - sizeToAdd + this.size / 5, 
+                        colour
+                    )
+                    drawCircle(
+                        this.x, this.y, 
+                        screenWidth / 200, 
+                        colour
+                    )
+                }
+                
+                this.drawback = function(lightcycle)
+                {   
+                    this.draw(this.colour(-50, -50, -50, lightcycle), 5)
+                    //console.log(this.colour(-50, -50, -50, lightcycle))
+                }
+                
+                this.drawfront = function(lightcycle)
+                {   
+                    this.draw(this.colour(0, 0, 0, lightcycle), 0)
+                }
+                
+                this.move = function()
+                {
+                    switch (keyDown)
+                    {
+                        case 37: // left arrow
+                            this.dx = -4
+                            this.dy = 0
+                            break;
+                        case 38: // up arrow
+                            this.dx = 0
+                            this.dy = -4
+                            break;
+                        case 39: // right arrow
+                            this.dx = 2
+                            this.dy = 0
+                            break;
+                        case 40: // down arrow
+                            this.dx = 0
+                            this.dy = 4
+                            break;
+                        default: // any other key
+                            this.dx = -1
+                            this.dy = 0
+                            break;
+                    }
+                    
+                    this.x += this.dx
+                    this.y += this.dy
+                    
+                    if (this.x < 0){
+                        this.x = screenWidth
+                    }
+                    if (this.x > screenWidth) {
+                        this.x = 0
+                    }
+                    
+                }
+            }
+            
+            function drawCar(x, y, dx, size, r, g, b) {
+                //like the boat the cars dont look the best, im trying to get them to be headlights but its not drawing the triangle and idk whyyyy, ofcource im notting getting any error, its just not working
+                this.x = x
+                this.y = y
+                this.size = size
+                this.dx = dx
+                
+                this.r = r
+                this.g = g
+                this.b = b
+                
+                this.colour = function(r, g, b, lightcycle) {
+                    
+                    if (cycle == "night") {
+                        this.nightMinus = 100
+                    } else {
+                        this.nightMinus = 0
+                    }
+                    
+                    if (lightcycle == "day") {
+                        //output = "rgba(" + (this.r + r) + ", " + (this.g + g) + ", " + (this.b + b) + ", " + dayAlpha +")"
+                        output = "rgb(" + (this.r + r) + ", " + (this.g + g) + ", " + (this.b + b)  + ")"
+                    } else {
+                        //output = "rgba(" + (this.r + r - this.nightMinus) + ", " + (this.g + g - this.nightMinus) + ", " + (this.b + b - this.nightMinus) + ", " + dayAlpha +")"
+                        output = "rgb(" + (this.r + r - this.nightMinus) + ", " + (this.g + g - this.nightMinus) + ", " + (this.b + b - this.nightMinus) + ")"
+                    }
+                    return output
+                }
+                
+                this.car = function(colour, sizeToAdd)
+                {
+                    drawRectangle(
+                        this.x + sizeToAdd, this.y - sizeToAdd + this.size / 5, 
+                        this.x + sizeToAdd, this.y + this.size - sizeToAdd, 
+                        this.x + this.size + sizeToAdd, this.y + this.size -  sizeToAdd, 
+                        this.x + this.size + sizeToAdd, this.y - sizeToAdd + this.size / 5, 
+                        colour
+                    )
+                    
+                    drawCircle(
+                        this.x + sizeToAdd, this.y + this.size - sizeToAdd, 
+                        screenWidth / 200, 
+                        colour
+                    )
+                    
+                    drawCircle(
+                        this.x + this.size + sizeToAdd, this.y + this.size -  sizeToAdd, 
+                        screenWidth / 200,  
+                        colour
+                    )
+                    
+                    
+                }
+                
+                this.carHeadlights = function(sizeToAdd) {
+                    //brokennnnnnnnn
+                    if (this.dx < 0) {
+                        drawTriangle(
+                            this.x, this.y - this.size / 2, 
+                            this.x - this.size * 1.5, this,y,
+                            this.x - this.size * 1.5, this.y - this.size / 2,
+                            "yellow"
+                        )
+                    } else {
+                        
+                    }
+                    
+                    
+                    
+                }
+                
+                this.drawback = function(lightcycle)
+                {   
+                    this.car(this.colour(-50, -50, -50, lightcycle), 5)
+                    this.carHeadlights(5)
+                    //console.log(this.colour(-50, -50, -50, lightcycle))
+                }
+                
+                this.drawfront = function(lightcycle)
+                {   
+                    this.car(this.colour(0, 0, 0, lightcycle), 0)
+                    this.carHeadlights(0)
+                }
+                
+                this.move = function(direction) 
+                {
+                    if (direction == "left") {
+                        if (this.x < 0) {
+                        //if it moves off the screen
+                        this.x = screenWidth + this.size
+                        }
+                    
+                    else {
+                        //else move it along the scene
+                        this.x += this.dx
+                        }
+                    }
+                    if (direction == "right") {
+                        if (this.x > screenWidth) {
+                        //if it moves off the screen
+                        this.x = 0 - this.size
+                        }
+                    
+                    else {
+                        //else move it along the scene
+                        this.x += this.dx
+                        }
+                    }
+                }
+            }
+            
+            //end of stupid functions
+            
+            function startScene() 
+            //runs on page load and when user presses the start button
+            {
+                initialiseScene();
+                intervalId = setInterval(drawScene, 50);
+            }
+            
+            function stopScene() 
+            //stops the scene from running, doesnt pause it
+            {
+                autostart = false;
+                clearInterval(intervalId);
+            }
+            
+            function initialiseScene() 
+            //sets up the scene
+            {
+                //code so i can draw to it
+                canvas = document.getElementById("mycanvas");
+                context = canvas.getContext("2d");
+                
+                //makes the canvas the size of the screen and updates it every 0.5 seconds if the screen is resized
+                function updateScreenSize() {
+                    screenWidth = canvas.width = window.innerWidth - 20;
+                    screenHeight = canvas.height = window.innerHeight - 75;
+                }
+                updateScreenSize()
+                intervalCanvasSize = setInterval(updateScreenSize, 500);
+                
+                window.addEventListener("keydown", onKeyDown);
+                window.addEventListener("keyup", onKeyUp);
+                
+                //setup objects
+                
+                //house
+                for (var i = 0; i < screenWidth / 200; i += 1)
+                {
+                    houses.push(new drawHouse(
+                            screenWidth / 10 + i*200, 
+                            screenHeight / 2 + screenHeight / 20 + getRandomInt(25),
+                            -1, 0,
+                            40 + getRandomInt(20),
+                            getRandomInt(250), getRandomInt(250), getRandomInt(250),
+                    ));
+                }
+                
+                //Lake
+                for (var i = 0; i < screenWidth / 10; i += 1)
+                {
+                    x = getRandomInt(screenWidth)
+                    //console.log(x)
+                    Lake.push(new drawLake(
+                        x,
+                        screenHeight - screenHeight / 45,
+                        -1,
+                        getRandomInt(screenHeight / 15) + getRandomInt(screenHeight / 15) + screenHeight / 15,
+                    ));
+                }
+                
+                //Clouds
+                for (var i = 0; i < screenWidth / 20; i += 1)
+                {
+                    x = screenWidth / getRandomInt(25)
+                    //console.log(x)
+                    Clouds.push(new drawClouds(
+                        x,
+                        screenHeight / 10 / getRandomInt(5),
+                        getRandomInt(-4) - 1,
+                        //-2,
+                        getRandomInt(screenHeight / 20) + getRandomInt(screenHeight / 20) + 10,
+                    ));
+                }
+                
+                //Road Lines
+                for (var i = 0; i < screenWidth / 100; i += 1)
+                {
+                    x = screenWidth / getRandomInt(25)
+                    //console.log(x)
+                    RoadLines.push(new drawSmallObjects(
+                        "Road Lines", 
+                        100*i, 
+                        screenHeight / 2 + screenHeight / 5, 
+                        -1, 
+                        "yellow"    
+                    ));
+                }
+                
+                //Cars higher
+                for (var i = 0; i < screenWidth / 300; i += 1)
+                //for (var i = 0; i < 1; i += 1)
+                {
+                    cars.push(new drawCar(
+                        getRandomInt(screenWidth), 
+                        screenHeight / 2 + screenHeight / 7, 
+                        -4, 
+                        ((screenWidth + screenHeight / 2) / 100) + getRandomInt(10), 
+                        150 + getRandomInt(50), 150 + getRandomInt(50), 150 + getRandomInt(50),
+                    ));
+                }
+                
+                //Cars lower
+                for (var i = 0; i < screenWidth / 300; i += 1)
+                //for (var i = 0; i < 1; i += 1)
+                {
+                    cars.push(new drawCar(
+                        getRandomInt(screenWidth), 
+                        screenHeight / 2 + screenHeight / 5, 
+                        2, 
+                        ((screenWidth + screenHeight / 2) / 100) + getRandomInt(10),
+                        150 + getRandomInt(50), 150 + getRandomInt(50), 150 + getRandomInt(50),
+                    ));
+                }
+                
+                //stars
+                for (var i = 0; i < screenWidth / 50; i += 1)
+                {
+                    stars.push(new drawSmallObjects(
+                        "stars", 
+                        getRandomInt(screenWidth), 
+                        getRandomInt(screenHeight / 2), 
+                        -0.1, 
+                        "yellow"    
+                    ))
+                }
+                
+                Sun = new Sun()
+                Boat = new boat()
+                Road = new drawRoad()
+            }
+            
+            function drawScene() {
+                //clear scene
+                context.clearRect(0, 0, screenWidth, screenHeight);
+                //night, day cycle
+                Sun.cycle()
+                
+                
+                
+                //the blue sky
+                skyGradient()
+                
+                //stars
+                for (var i = 0; i < stars.length; i += 1)
+                {
+                    stars[i].draw()
+                    stars[i].move()
+                    
+                }
+                
+                //clouds behind sun
+                for (var i = (Clouds.length - Clouds.length / 2) + 0.5; i < Clouds.length; i += 1)
+                {
+                    Clouds[i].drawShadow()
+                    
+                    
+                }
+                for (var i = (Clouds.length - Clouds.length / 2) + 0.5; i < Clouds.length; i += 1)
+                {
+                    Clouds[i].drawCloud()
+                    Clouds[i].move()
+                    
+                }
+                
+                //sun
+                Sun.draw()
+                Sun.moveSun()
+                
+                //groundbackground
+                groundBackground()
+                
+                
+                
+                //road
+                drawRectangle   (
+                            0, screenHeight / 2 + screenHeight / 7,             //x1, y1
+                            screenWidth, screenHeight / 2 + screenHeight / 7,   //x2, y2
+                            screenWidth, screenHeight / 2 + screenHeight / 4,   //x3, y3
+                            0, screenHeight / 2 + screenHeight / 4,             //x4, y4
+                            "gray"                                              //colour
+                                )
+                
+                //houses
+                for (var i = 0; i < houses.length; i += 1)
+                {
+                    houses[i].draw("night")
+                    houses[i].draw("day")
+                    houses[i].move()
+                    
+                }
+                
+                //lake
+                for (var i = 0; i < Lake.length; i += 1)
+                {
+                    Lake[i].drawOutline()
+                    
+                }
+                 for (var i = 0; i < Lake.length; i += 1)
+                {
+                    Lake[i].drawWater()
+                    Lake[i].move()
+                    
+                }
+                
+                //road
+                Road.draw()
+
+                
+                //clouds infront of sun
+                for (var i = 0; i < Clouds.length / 2; i += 1)
+                {
+                    Clouds[i].drawShadow()
+                    
+                }
+                for (var i = 0; i < Clouds.length / 2; i += 1)
+                {
+                    Clouds[i].drawCloud()
+                    Clouds[i].move()
+                    
+                }
+                
+                //roadlines
+                //so i was writing comments, and i alt tabbed to chrome and the lines had eithered disappeared or gone black and im not sure why, so i reloaded and watched it and waited, it cycled 6 times and the lines stayed there the whole time so idk if u see it happen please send help
+                for (var i = 0; i < RoadLines.length; i += 1)
+                {
+                    RoadLines[i].draw()
+                    RoadLines[i].move()
+                    
+                }
+                //cars
+                for (var i = 0; i < cars.length; i += 1)
+                {
+                    cars[i].drawback(cycle)
+                    
+                }
+                for (var i = 0; i < cars.length; i += 1)
+                {
+                    cars[i].drawfront(cycle)
+                }
+                //cars direction
+                
+                for (var i = 0; i < cars.length / 2; i += 1)
+                {
+                    cars[i].move("left")
+                }
+                
+                for (var i = cars.length / 2; i < cars.length; i += 1)
+                {
+                    cars[i].move("right")
+                }
+                
+                //boat
+                Boat.drawback(cycle)
+                Boat.drawfront(cycle)
+                Boat.move()
+                
+                //1000 lines of code, took me at least 10 hours but idk i like it. it defiantly could be written in 500 or less lines of code but im horrible in planing, an especially when i started coding this i had no idea what i would, could or should do. plz give A+
+                
+            }
+            
+        </script>
+    </body> 
+</html>
